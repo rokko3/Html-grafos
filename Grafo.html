@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafo Interactivo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid black;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Grafo Interactivo</h1>
+    <script>
+        let nodos = [];
+        let arcos = [];
+        let nodoSeleccionado = null;
+
+        class Nodo {
+            constructor(nombre, x, y) {
+                this.nombre = nombre;
+                this.x = x;
+                this.y = y;
+                this.radio = 20;
+                this.fijo = true; // Solo se puede mover antes de conectarlo
+            }
+
+            dibujar() {
+                fill(173, 216, 230);
+                ellipse(this.x, this.y, this.radio * 2, this.radio * 2);
+                fill(0);
+                textAlign(CENTER, CENTER);
+                text(this.nombre, this.x, this.y);
+            }
+
+            contiene(px, py) {
+                let d = dist(px, py, this.x, this.y);
+                return d < this.radio;
+            }
+
+            mover(x, y) {
+                if (this.fijo) { // Solo se mueve si no está conectado
+                    this.x = x;
+                    this.y = y;
+                }
+            }
+        }
+
+        class Arco {
+            constructor(nodo1, nodo2, peso) {
+                this.nodo1 = nodo1;
+                this.nodo2 = nodo2;
+                this.peso = peso;
+                nodo1.fijo = true;
+                nodo2.fijo = true;
+            }
+
+            dibujar() {
+                stroke(0);
+                let x1 = this.nodo1.x;
+                let y1 = this.nodo1.y;
+                let x2 = this.nodo2.x;
+                let y2 = this.nodo2.y;
+                
+
+                let angle = atan2(y2 - y1, x2 - x1);
+            
+                let arrowSize = 10;  
+                let arrowOffset = 20; 
+            
+                let newX2 = x2 - arrowOffset * cos(angle);
+                let newY2 = y2 - arrowOffset * sin(angle);
+            
+                line(x1, y1, newX2, newY2);
+            
+                let midX = (x1 + newX2) / 2;
+                let midY = (y1 + newY2) / 2;
+                fill(0);
+                text(this.peso, midX, midY);
+            
+                push();
+                translate(newX2, newY2);
+                rotate(angle);
+                fill(0);
+                triangle(0, 0, -arrowSize, arrowSize / 2, -arrowSize, -arrowSize / 2);
+                pop();
+            }
+            
+        }
+
+        function setup() {
+            createCanvas(1000, 400);
+        }
+
+        function draw() {
+            background(255);
+            arcos.forEach(arco => arco.dibujar());
+            nodos.forEach(nodo => nodo.dibujar());
+        }
+
+        function mousePressed() {
+            for (let nodo of nodos) {
+                if (nodo.contiene(mouseX, mouseY)) {
+                    nodoSeleccionado = nodo;
+                    return;
+                }
+            }
+        }
+
+        function mouseDragged() {
+            if (nodoSeleccionado) {
+                nodoSeleccionado.mover(mouseX, mouseY);
+            }
+        }
+
+        function mouseReleased() {
+            nodoSeleccionado = null;
+        }
+
+        function agregarNodo() {
+            let nombre = prompt("Ingrese el nombre del nodo:");
+            if (!nombre || nodos.some(n => n.nombre === nombre)) {
+                alert("Nombre inválido o repetido.");
+                return;
+            }
+            let nuevoNodo = new Nodo(nombre, random(50, width - 50), random(50, height - 50));
+            nodos.push(nuevoNodo);
+        }
+
+        function eliminarNodo() {
+            let nombre = prompt("Ingrese el nombre del nodo a eliminar:");
+            nodos = nodos.filter(nodo => nodo.nombre !== nombre);
+            arcos = arcos.filter(arco => arco.nodo1.nombre !== nombre && arco.nodo2.nombre !== nombre);
+        }
+
+        function conectarNodos() {
+            let nombre1 = prompt("Ingrese el nombre del primer nodo:");
+            let nombre2 = prompt("Ingrese el nombre del segundo nodo:");
+            if (nombre1 === nombre2) {
+                alert("No puedes conectar un nodo consigo mismo.");
+                return;
+            }
+            let nodo1 = nodos.find(n => n.nombre === nombre1);
+            let nodo2 = nodos.find(n => n.nombre === nombre2);
+            if (!nodo1 || !nodo2) {
+                alert("Uno o ambos nodos no existen.");
+                return;
+            }
+            let peso = parseFloat(prompt("Ingrese el peso del arco (positivo):"));
+            if (isNaN(peso) || peso <= 0) {
+                alert("El peso debe ser un número positivo.");
+                return;
+            }
+            arcos.push(new Arco(nodo1, nodo2, peso));
+        }
+
+        function eliminarArco() {
+            let nombre1 = prompt("Ingrese el nombre del primer nodo:");
+            let nombre2 = prompt("Ingrese el nombre del segundo nodo:");
+            arcos = arcos.filter(arco => !(arco.nodo1.nombre === nombre1 && arco.nodo2.nombre === nombre2));
+        }
+
+        function cambiarPeso() {
+            let nombre1 = prompt("Ingrese el nombre del primer nodo:");
+            let nombre2 = prompt("Ingrese el nombre del segundo nodo:");
+            let arco = arcos.find(arco => arco.nodo1.nombre === nombre1 && arco.nodo2.nombre === nombre2);
+            if (!arco) {
+                alert("Arco no encontrado.");
+                return;
+            }
+            let nuevoPeso = parseFloat(prompt("Ingrese el nuevo peso (positivo):"));
+            if (isNaN(nuevoPeso) || nuevoPeso <= 0) {
+                alert("El peso debe ser un número positivo.");
+                return;
+            }
+            arco.peso = nuevoPeso;
+        }
+    </script>
+
+    <button onclick="agregarNodo()">Agregar Nodo</button>
+    
+    <button onclick="eliminarNodo()">Eliminar Nodo</button>
+    <button onclick="conectarNodos()">Conectar Nodos</button>
+    <button onclick="eliminarArco()">Eliminar Arco</button>
+    <button onclick="cambiarPeso()">Cambiar Peso</button>
+</body>
+</html>
