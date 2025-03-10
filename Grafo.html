@@ -20,96 +20,101 @@
 <body>
     <h1>Grafo Interactivo</h1>
     <script>
-        let nodos = [];
+        // Se crean listas vacias de nodos y de arcos
+        let nodos = []; 
         let arcos = [];
-        let nodoSeleccionado = null;
+        let nodoSeleccionado = null; // El nodo que se selccione puede moverse
 
         class Nodo {
             constructor(nombre, x, y) {
                 this.nombre = nombre;
                 this.x = x;
                 this.y = y;
-                this.radio = 20;
+                this.radio = 20; 
                 this.fijo = true; // Solo se puede mover antes de conectarlo
             }
 
             dibujar() {
-                fill(173, 216, 230);
-                ellipse(this.x, this.y, this.radio * 2, this.radio * 2);
-                fill(0);
-                textAlign(CENTER, CENTER);
-                text(this.nombre, this.x, this.y);
+                fill(173, 216, 230); // Da el color de relleno del nodo
+                ellipse(this.x, this.y, this.radio * 2, this.radio * 2); // Dibuja nodo como un circulo
+                fill(0); // Color del texto
+                textAlign(CENTER, CENTER); 
+                text(this.nombre, this.x, this.y); // Muestra nombre de nodo en el centro del mismo 
             }
 
             contiene(px, py) {
-                let d = dist(px, py, this.x, this.y);
-                return d < this.radio;
+                return dist(px, py, this.x, this.y) < this.radio; //  Verifica  si un punto esta dentro del nodo
             }
 
             mover(x, y) {
                 if (this.fijo) { // Solo se mueve si no está conectado
-                    this.x = x;
-                    this.y = y;
+                    let margen = this.radio; // Define la margen para evitar salir del rectangulo
+                    this.x = constrain(x, margen, width-margen); // Restringe el movimiento en x
+                    this.y = constrain(y, margen, height- margen); // Restringe el movimiento en x
                 }
             }
         }
 
         class Arco {
-            constructor(nodo1, nodo2, peso) {
+            constructor(nodo1, nodo2, peso, bidireccional) {
                 this.nodo1 = nodo1;
                 this.nodo2 = nodo2;
                 this.peso = peso;
-                nodo1.fijo = true;
+                this.bidireccional = bidireccional; 
+                nodo1.fijo = true; // Fija el nodo despues de conectarlo 
                 nodo2.fijo = true;
             }
 
             dibujar() {
-                stroke(0);
-                let x1 = this.nodo1.x;
-                let y1 = this.nodo1.y;
-                let x2 = this.nodo2.x;
-                let y2 = this.nodo2.y;
-                
-
-                let angle = atan2(y2 - y1, x2 - x1);
-            
-                let arrowSize = 10;  
-                let arrowOffset = 20; 
-            
+                stroke(0); // Color de la linea del arco
+                let {x: x1, y: y1} = this.nodo1;
+                let {x: x2, y: y2} = this.nodo2;
+                let angle = atan2(y2 - y1, x2 - x1); // Calcula el angulo entre los nodos
+                let arrowSize = 10, arrowOffset = 20; 
                 let newX2 = x2 - arrowOffset * cos(angle);
                 let newY2 = y2 - arrowOffset * sin(angle);
-            
-                line(x1, y1, newX2, newY2);
-            
+
+                line(x1, y1, newX2, newY2); //Dibuja la linea del arco
                 let midX = (x1 + newX2) / 2;
-                let midY = (y1 + newY2) / 2;
+                let midY =(y1 + newY2) / 2;
                 fill(0);
-                text(this.peso, midX, midY);
-            
+                text(this.peso, midX, midY); // Muestra el peso del arco
+
                 push();
                 translate(newX2, newY2);
                 rotate(angle);
                 fill(0);
-                triangle(0, 0, -arrowSize, arrowSize / 2, -arrowSize, -arrowSize / 2);
+                triangle(0, 0, -arrowSize, arrowSize/2, -arrowSize, -arrowSize/2); //Flecha del arco
                 pop();
+
+                if(this.bidireccional){ // Si el arco es bidireccional,dibuja otra flcha en el primer nodo
+                    let newX1 = x1 + arrowOffset * cos(angle);
+                    let newY1 = y1 + arrowOffset * sin(angle);
+                    push();
+                    translate(newX1, newY1);
+                    rotate(angle + PI);
+                    fill(0);
+                    triangle(0, 0, -arrowSize, arrowSize/2, -arrowSize, -arrowSize/2);
+                    pop();
+                }
             }
-            
+
         }
 
         function setup() {
-            createCanvas(1000, 400);
+            createCanvas(1000, 400); // Crea un espacio de 1000x400 pixeles
         }
 
         function draw() {
-            background(255);
-            arcos.forEach(arco => arco.dibujar());
-            nodos.forEach(nodo => nodo.dibujar());
+            background(255); // Color fondo blanco
+            arcos.forEach(arco => arco.dibujar()); //Dibuja todos los arcos
+            nodos.forEach(nodo => nodo.dibujar()); // Dibuja todos los nodos
         }
 
         function mousePressed() {
             for (let nodo of nodos) {
                 if (nodo.contiene(mouseX, mouseY)) {
-                    nodoSeleccionado = nodo;
+                    nodoSeleccionado = nodo; //Selecciona nodo clikeado
                     return;
                 }
             }
@@ -117,12 +122,12 @@
 
         function mouseDragged() {
             if (nodoSeleccionado) {
-                nodoSeleccionado.mover(mouseX, mouseY);
+                nodoSeleccionado.mover(mouseX, mouseY); // Mueve nodo seleccionado
             }
         }
 
         function mouseReleased() {
-            nodoSeleccionado = null;
+            nodoSeleccionado = null; //Suelta el nodo seleccionado
         }
 
         function agregarNodo() {
@@ -159,7 +164,8 @@
                 alert("El peso debe ser un número positivo.");
                 return;
             }
-            arcos.push(new Arco(nodo1, nodo2, peso));
+            let bidireccional = confirm("¿El arco debe ser bidireccional?");
+            arcos.push(new Arco(nodo1, nodo2, peso, bidireccional));
         }
 
         function eliminarArco() {
@@ -186,7 +192,7 @@
     </script>
 
     <button onclick="agregarNodo()">Agregar Nodo</button>
-    
+
     <button onclick="eliminarNodo()">Eliminar Nodo</button>
     <button onclick="conectarNodos()">Conectar Nodos</button>
     <button onclick="eliminarArco()">Eliminar Arco</button>
