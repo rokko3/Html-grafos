@@ -146,12 +146,25 @@
             actualizarMatriz();
         }
 
+        function mostrarPrerequisitos() {
+            let nombreNodo = prompt("Ingrese el nombre del nodo para obtener sus prerequisitos:");
+            let prerequisitos = obtenerPrerequisitos(nombreNodo);
+            alert("Prerequisitos de " + nombreNodo + ": " + (prerequisitos.length > 0 ? prerequisitos.join(", ") : "Ninguno"));
+        }
+        
+        function mostrarPostrequisitos() {
+            let nombreNodo = prompt("Ingrese el nombre del nodo para obtener sus postrequisitos:");
+            let postrequisitos = obtenerPostrequisitos(nombreNodo);
+            alert("Postrequisitos de " + nombreNodo + ": " + (postrequisitos.length > 0 ? postrequisitos.join(", ") : "Ninguno"));
+        }
+
         function eliminarNodo() {
             let nombre = prompt("Ingrese el nombre del nodo a eliminar:");
             nodos = nodos.filter(nodo => nodo.nombre !== nombre);
             arcos = arcos.filter(arco => arco.nodo1.nombre !== nombre && arco.nodo2.nombre !== nombre);
             actualizarMatriz();
         }
+
 
         function conectarNodos() {
             let nombre1 = prompt("Ingrese el nombre del primer nodo:");
@@ -275,6 +288,37 @@
             });
         
             matrizDiv.appendChild(tabla); // Agrega la tabla al div
+
+            
+        }
+        function obtenerPrerequisitos(nombreNodo) {
+            let nodo = nodos.find(n => n.nombre === nombreNodo);
+            if (!nodo) {
+                alert("El nodo no existe.");
+                return [];
+            }
+        
+            // Encuentra todos los nodos que tienen un arco hacia el nodo dado
+            let prerequisitos = arcos
+                .filter(arco => arco.nodo2.nombre === nombreNodo)
+                .map(arco => arco.nodo1.nombre);
+        
+            return prerequisitos;
+        }
+        
+        function obtenerPostrequisitos(nombreNodo) {
+            let nodo = nodos.find(n => n.nombre === nombreNodo);
+            if (!nodo) {
+                alert("El nodo no existe.");
+                return [];
+            }
+        
+            // Encuentra todos los nodos que se pueden alcanzar desde el nodo dado
+            let postrequisitos = arcos
+                .filter(arco => arco.nodo1.nombre === nombreNodo)
+                .map(arco => arco.nodo2.nombre);
+        
+            return postrequisitos;
         }
     </script>
 
@@ -284,6 +328,8 @@
     <button onclick="conectarNodos()">Conectar Nodos</button>
     <button onclick="eliminarArco()">Eliminar Arco</button>
     <button onclick="cambiarPeso()">Cambiar Peso</button>
+    <button onclick="mostrarPrerequisitos()">Mostrar Prerequisitos</button>
+    <button onclick="mostrarPostrequisitos()">Mostrar Postrequisitos</button>
     <div id="matriz"></div>
 </body>
 </html>
