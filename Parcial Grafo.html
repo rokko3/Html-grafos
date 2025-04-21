@@ -25,12 +25,12 @@
      <h1>Grafo Interactivo</h1>
      
      <script>
-         // Se crean listas vacias de nodos y de arcos
-         let nodos = []; 
-         let arcos = [];
-         let nodoSeleccionado = null; // El nodo que se selccione puede moverse
+         // Se crean listas vacias de vertices y de aristas
+         let vertices = []; 
+         let aristas = [];
+         let verticeseleccionado = null; // El vertice que se selccione puede moverse
  
-         class Nodo {
+         class vertice {
              constructor(nombre, x, y) {
                  this.nombre = nombre;
                  this.x = x;
@@ -40,15 +40,15 @@
              }
  
              dibujar() {
-                 fill(173, 216, 230); // Da el color de relleno del nodo
-                 ellipse(this.x, this.y, this.radio * 2, this.radio * 2); // Dibuja nodo como un circulo
+                 fill(173, 216, 230); // Da el color de relleno del vertice
+                 ellipse(this.x, this.y, this.radio * 2, this.radio * 2); // Dibuja vertice como un circulo
                  fill(0); // Color del texto
                  textAlign(CENTER, CENTER); 
-                 text(this.nombre, this.x, this.y); // Muestra nombre de nodo en el centro del mismo 
+                 text(this.nombre, this.x, this.y); // Muestra nombre de vertice en el centro del mismo 
              }
  
              contiene(px, py) {
-                 return dist(px, py, this.x, this.y) < this.radio; //  Verifica  si un punto esta dentro del nodo
+                 return dist(px, py, this.x, this.y) < this.radio; //  Verifica  si un punto esta dentro del vertice
              }
  
              mover(x, y) {
@@ -60,48 +60,54 @@
              }
          }
  
-         class Arco {
-             constructor(nodo1, nodo2, peso, bidireccional) {
-                 this.nodo1 = nodo1;
-                 this.nodo2 = nodo2;
+         class arista {
+             constructor(vertice1, vertice2, peso, bidireccional) {
+
+                 this.vertice1 = vertice1;
+                 this.vertice2 = vertice2;
                  this.peso = peso;
                  this.bidireccional = bidireccional; 
-                 nodo1.fijo = true; // Fija el nodo despues de conectarlo 
-                 nodo2.fijo = true;
+                 vertice1.fijo = true; // Fija el vertice despues de conectarlo 
+                 vertice2.fijo = true;
              }
  
              dibujar() {
-                 stroke(0); // Color de la linea del arco
-                 let {x: x1, y: y1} = this.nodo1;
-                 let {x: x2, y: y2} = this.nodo2;
-                 let angle = atan2(y2 - y1, x2 - x1); // Calcula el angulo entre los nodos
-                 let arrowSize = 10, arrowOffset = 20; 
-                 let newX2 = x2 - arrowOffset * cos(angle);
-                 let newY2 = y2 - arrowOffset * sin(angle);
- 
-                 line(x1, y1, newX2, newY2); //Dibuja la linea del arco
-                 let midX = (x1 + newX2) / 2;
-                 let midY =(y1 + newY2) / 2;
-                 fill(0);
-                 text(this.peso, midX, midY); // Muestra el peso del arco
- 
-                 push();
-                 translate(newX2, newY2);
-                 rotate(angle);
-                 fill(0);
-                 triangle(0, 0, -arrowSize, arrowSize/2, -arrowSize, -arrowSize/2); //Flecha del arco
-                 pop();
- 
-                 if(this.bidireccional){ // Si el arco es bidireccional,dibuja otra flcha en el primer nodo
-                     let newX1 = x1 + arrowOffset * cos(angle);
-                     let newY1 = y1 + arrowOffset * sin(angle);
-                     push();
-                     translate(newX1, newY1);
-                     rotate(angle + PI);
-                     fill(0);
-                     triangle(0, 0, -arrowSize, arrowSize/2, -arrowSize, -arrowSize/2);
-                     pop();
-                 }
+                stroke(0); // Color de la linea del arista
+                let {x: x1, y: y1} = this.vertice1;
+                let {x: x2, y: y2} = this.vertice2;
+                let angle = atan2(y2 - y1, x2 - x1); // Calcula el angulo entre los vertices
+                let arrowSize = 10, arrowOffset = 20; 
+                let newX2 = x2 - arrowOffset * cos(angle);
+                let newY2 = y2 - arrowOffset * sin(angle);
+        
+                line(x1, y1, newX2, newY2); // Dibuja la linea del arista
+                let midX = (x1 + newX2) / 2;
+                let midY = (y1 + newY2) / 2;
+                fill(0);
+        
+                // Only draw the weight once (avoid duplicate weights for bidirectional edges)
+                if (this.vertice1 !== this.vertice2 || this.peso !== 0) {
+                    text(this.peso, midX, midY); // Muestra el peso del arista
+                }
+        
+                push();
+                translate(newX2, newY2);
+                rotate(angle);
+                fill(0);
+                triangle(0, 0, -arrowSize, arrowSize/2, -arrowSize, -arrowSize/2); // Flecha del arista
+                pop();
+        
+                // dibuja en ambos lados si es bidireccional
+                if (this.bidireccional) {
+                    let newX1 = x1 + arrowOffset * cos(angle);
+                    let newY1 = y1 + arrowOffset * sin(angle);
+                    push();
+                    translate(newX1, newY1);
+                    rotate(angle + PI);
+                    fill(0);
+                    triangle(0, 0, -arrowSize, arrowSize/2, -arrowSize, -arrowSize/2);
+                    pop();
+                }
              }
  
          }
@@ -112,125 +118,255 @@
  
          function draw() {
              background(255); // Color fondo blanco
-             arcos.forEach(arco => arco.dibujar()); //Dibuja todos los arcos
-             nodos.forEach(nodo => nodo.dibujar()); // Dibuja todos los nodos
+             aristas.forEach(arista => arista.dibujar()); //Dibuja todos los aristas
+             vertices.forEach(vertice => vertice.dibujar()); // Dibuja todos los vertices
          }
  
          function mousePressed() {
-             for (let nodo of nodos) {
-                 if (nodo.contiene(mouseX, mouseY)) {
-                     nodoSeleccionado = nodo; //Selecciona nodo clikeado
+             for (let vertice of vertices) {
+                 if (vertice.contiene(mouseX, mouseY)) {
+                     verticeseleccionado = vertice; //Selecciona vertice clikeado
                      return;
                  }
              }
          }
  
          function mouseDragged() {
-             if (nodoSeleccionado) {
-                 nodoSeleccionado.mover(mouseX, mouseY); // Mueve nodo seleccionado
+             if (verticeseleccionado) {
+                 verticeseleccionado.mover(mouseX, mouseY); // Mueve vertice seleccionado
              }
          }
  
          function mouseReleased() {
-             nodoSeleccionado = null; //Suelta el nodo seleccionado
+             verticeseleccionado = null; //Suelta el vertice seleccionado
          }
  
-         function agregarNodo() {
-             let nombre = prompt("Ingrese el nombre del nodo:");
-             if (!nombre || nodos.some(n => n.nombre === nombre)) {
-                 alert("Nombre inválido o repetido.");
+         function agregarvertice() {
+             let nombre = prompt("Ingrese el nombre del vertice:");
+             if (!nombre || vertices.some(n => n.nombre === nombre)) {
+                 alert("Nombre invalido o repetido.");
                  return;
              }
-             let nuevoNodo = new Nodo(nombre, random(50, width - 50), random(50, height - 50));
-             nodos.push(nuevoNodo);
+             let nuevovertice = new vertice(nombre, random(50, width - 50), random(50, height - 50));
+             vertices.push(nuevovertice);
              actualizarMatriz();
          }
  
          function mostrarPrerequisitos() {
-             let nombreNodo = prompt("Ingrese el nombre del nodo para obtener sus prerequisitos:");
-             let prerequisitos = obtenerPrerequisitos(nombreNodo);
-             alert("Prerequisitos de " + nombreNodo + ": " + (prerequisitos.length > 0 ? prerequisitos.join(", ") : "Ninguno"));
+             let nombrevertice = prompt("Ingrese el nombre del vertice para obtener sus prerequisitos:");
+             let prerequisitos = obtenerPrerequisitos(nombrevertice);
+             alert("Prerequisitos de " + nombrevertice + ": " + (prerequisitos.length > 0 ? prerequisitos.join(", ") : "Ninguno"));
          }
          
          function mostrarPostrequisitos() {
-             let nombreNodo = prompt("Ingrese el nombre del nodo para obtener sus postrequisitos:");
-             let postrequisitos = obtenerPostrequisitos(nombreNodo);
-             alert("Postrequisitos de " + nombreNodo + ": " + (postrequisitos.length > 0 ? postrequisitos.join(", ") : "Ninguno"));
+             let nombrevertice = prompt("Ingrese el nombre del vertice para obtener sus postrequisitos:");
+             let postrequisitos = obtenerPostrequisitos(nombrevertice);
+             alert("Postrequisitos de " + nombrevertice + ": " + (postrequisitos.length > 0 ? postrequisitos.join(", ") : "Ninguno"));
          }
  
-         function eliminarNodo() {
-             let nombre = prompt("Ingrese el nombre del nodo a eliminar:");
-             nodos = nodos.filter(nodo => nodo.nombre !== nombre);
-             arcos = arcos.filter(arco => arco.nodo1.nombre !== nombre && arco.nodo2.nombre !== nombre);
+         function eliminarvertice() {
+             let nombre = prompt("Ingrese el nombre del vertice a eliminar:");
+             vertices = vertices.filter(vertice => vertice.nombre !== nombre);
+             aristas = aristas.filter(arista => arista.vertice1.nombre !== nombre && arista.vertice2.nombre !== nombre);
              actualizarMatriz();
          }
  
  
-         function conectarNodos() {
-             let nombre1 = prompt("Ingrese el nombre del primer nodo:");
-             let nombre2 = prompt("Ingrese el nombre del segundo nodo:");
-             if (nombre1 === nombre2) {
-                 alert("No puedes conectar un nodo consigo mismo.");
+         function conectarvertices() {
+            let nombre1 = prompt("Ingrese el nombre del primer vertice:");
+            let nombre2 = prompt("Ingrese el nombre del segundo vertice:");
+            if (nombre1 === nombre2) {
+                alert("No puedes conectar un vertice consigo mismo.");
+                return;
+            }
+            let vertice1 = vertices.find(n => n.nombre === nombre1);
+            let vertice2 = vertices.find(n => n.nombre === nombre2);
+            if (!vertice1 || !vertice2) {
+                alert("Uno o ambos vertices no existen.");
+                return;
+            }
+            let peso = parseFloat(prompt("Ingrese el peso del arista (positivo):"));
+            if (isNaN(peso) || peso <= 0) {
+                alert("El peso debe ser un numero positivo.");
+                return;
+            }
+        
+            let bidireccional = confirm("¿El arista debe ser bidireccional?");
+            
+            // Crear el primer arista
+            let arista1 = new arista(vertice1, vertice2, peso, bidireccional);
+        
+            // Verificar si la arista ya existe
+            let existeArista = aristas.some(arista => 
+                (arista.vertice1 === arista1.vertice1 && arista.vertice2 === arista1.vertice2) || 
+                (arista.vertice1 === arista1.vertice2 && arista.vertice2 === arista1.vertice1)
+            );
+        
+            if (existeArista) {
+                alert("No se puede volver a conectar la misma arista");
+            } else {
+                aristas.push(arista1);
+                actualizarMatriz();
+            }
+        }
+ 
+         function eliminararista() {
+             let nombre1 = prompt("Ingrese el nombre del primer vertice:");
+             let nombre2 = prompt("Ingrese el nombre del segundo vertice:");
+ 
+             let vertice1 = vertices.find(n => n.nombre === nombre1); //Verificar que los vertices existen
+             let vertice2 = vertices.find(n => n.nombre === nombre2);
+ 
+             if (!vertice1 || !vertice2) {
+ 
+                 alert("Uno o ambos vertices no existen.");
                  return;
              }
-             let nodo1 = nodos.find(n => n.nombre === nombre1);
-             let nodo2 = nodos.find(n => n.nombre === nombre2);
-             if (!nodo1 || !nodo2) {
-                 alert("Uno o ambos nodos no existen.");
-                 return;
-             }
-             let peso = parseFloat(prompt("Ingrese el peso del arco (positivo):"));
-             if (isNaN(peso) || peso <= 0) {
-                 alert("El peso debe ser un número positivo.");
-                 return;
-             }
-             let bidireccional = confirm("¿El arco debe ser bidireccional?");
-             arcos.push(new Arco(nodo1, nodo2, peso, bidireccional));
-             actualizarMatriz();
-         }
- 
-         function eliminarArco() {
-             let nombre1 = prompt("Ingrese el nombre del primer nodo:");
-             let nombre2 = prompt("Ingrese el nombre del segundo nodo:");
- 
-             let nodo1 = nodos.find(n => n.nombre === nombre1); //Verificar que los nodos existen
-             let nodo2 = nodos.find(n => n.nombre === nombre2);
- 
-             if (!nodo1 || !nodo2) {
- 
-                 alert("Uno o ambos nodos no existen.");
-                 return;
-             }
-             //Verificar que los arcos existen
-             let arcoExistente = arcos.find(arco => 
-                 (arco.nodo1.nombre === nombre1 && arco.nodo2.nombre === nombre2) ||
-                 (arco.nodo1.nombre === nombre2 && arco.nodo2.nombre === nombre1) // Para arcos bidireccionales
+             //Verificar que los aristas existen
+             let aristaExistente = aristas.find(arista => 
+                 (arista.vertice1.nombre === nombre1 && arista.vertice2.nombre === nombre2) ||
+                 (arista.vertice2.nombre === nombre2 && arista.vertice1.nombre === nombre1) // Para aristas bidireccionales
              );
-             if (!arcoExistente) {
-                 alert("El arco no existe");
+             if (!aristaExistente) {
+                 alert("El arista no existe");
                  return;
              }
-             arcos = arcos.filter(arco => !(arco.nodo1.nombre === nombre1 && arco.nodo2.nombre === nombre2) &&
-             !(arco.nodo1.nombre === nombre2 && arco.nodo2.nombre === nombre1));
+             aristas = aristas.filter(arista => !(arista.vertice1.nombre === nombre1 && arista.vertice2.nombre === nombre2) &&
+             !(arista.vertice1.nombre === nombre2 && arista.vertice2.nombre === nombre1));
              actualizarMatriz();
          }
  
          function cambiarPeso() {
-             let nombre1 = prompt("Ingrese el nombre del primer nodo:");
-             let nombre2 = prompt("Ingrese el nombre del segundo nodo:");
-             let arco = arcos.find(arco => arco.nodo1.nombre === nombre1 && arco.nodo2.nombre === nombre2);
-             if (!arco) {
-                 alert("Arco no encontrado.");
+             let nombre1 = prompt("Ingrese el nombre del primer vertice:");
+             let nombre2 = prompt("Ingrese el nombre del segundo vertice:");
+             let arista = aristas.find(arista => arista.vertice1.nombre === nombre1 && arista.vertice2.nombre === nombre2);
+             if (!arista) {
+                 alert("arista no encontrado.");
                  return;
              }
              let nuevoPeso = parseFloat(prompt("Ingrese el nuevo peso (positivo):"));
              if (isNaN(nuevoPeso) || nuevoPeso <= 0) {
-                 alert("El peso debe ser un número positivo.");
+                 alert("El peso debe ser un numero positivo.");
                  return;
              }
-             arco.peso = nuevoPeso;
+             arista.peso = nuevoPeso;
              actualizarMatriz();
          }
+
+
+
+
+         function exportarGrafo() {
+            var export_vertice = "### VERTICES ###\n";
+            vertices.forEach(vertice => {
+                export_vertice += `Nombre: ${vertice.nombre}, Coordenadas: (${vertice.x}, ${vertice.y})\n`;
+            });
+        
+            var export_arista = "### ARISTAS ###\n";
+            aristas.forEach(arista => {
+                export_arista += `Conexion: ${arista.vertice1.nombre} <-> ${arista.vertice2.nombre}, Peso: ${arista.peso}, Bidireccional: ${arista.bidireccional ? "Si" : "No"}\n`;
+            });
+        
+            var finalExport = export_vertice + "\n" + export_arista;
+        
+            var enlace = document.createElement("a");
+            enlace.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(finalExport));
+            enlace.setAttribute("download", "grafo.txt");
+            enlace.style.display = "none";
+        
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+        }
+
+        
+
+        
+        function importarGrafo() {
+            var archivo = document.createElement("input");
+            archivo.type = "file";
+            archivo.accept = ".txt";
+            archivo.onchange = function(e) {
+                var reader = new FileReader();
+                reader.onload = function() {
+                    var data = reader.result;
+                    var verticesData = data.split("### VERTICES ###\n")[1].split("### ARISTAS ###\n")[0].trim().split("\n");
+                    var aristasData = data.split("### ARISTAS ###\n")[1].trim().split("\n");
+        
+                    // Limpiar los vértices y aristas existentes
+                    vertices = [];
+                    aristas = [];
+        
+                    // Parsear los vértices
+                    verticesData.forEach(line => {
+                        var partes = line.split(", Coordenadas: ");
+                        
+                        var nombre = partes[0].split(": ")[1]; //Divide la cadena de caracteres y coge el nombre
+                        if (partes.length > 1) {
+                       
+                            var coordsString = partes[1].slice(1, -1); //Permite eliminar los parentesis
+                            
+                            // Separar las coordenadas por la coma
+                            var coords = coordsString.split(", ");
+                            
+                            // Verificar que hemos obtenido dos coordenadas
+                            if (coords.length === 2) {
+                                // Convertir las coordenadas en números flotantes
+                                var x = parseFloat(coords[0].trim()); // Coordenada X
+                                var y = parseFloat(coords[1].trim()); // Coordenada Y
+                    
+                                
+                                vertices.push(new vertice(nombre, x, y)); 
+                            } else {
+                                console.error("Error: Las coordenadas no estan en el formato esperado.");
+                            }
+                        } else {
+                            console.error("Error: La linea no contiene coordenadas.");
+                        }
+                    });
+        
+                    // Parsear las aristas
+                    aristasData.forEach(line => {
+                        var partes = line.split(", ");
+                        var conexion = partes[0].split(": ")[1].split(" <-> ");
+                        
+                        // Buscar los vértices en el array 'vertices'
+                        var vertice1 = vertices.find(v => v.nombre === conexion[0]);
+                        var vertice2 = vertices.find(v => v.nombre === conexion[1]);
+                    
+                        // Verificar si los vértices fueron encontrados
+                        if (!vertice1 || !vertice2) {
+                            console.error(`Error: No se encontraron los vertices "${conexion[0]}" y/o "${conexion[1]}"`);
+                            return; // Salir de esta iteración si no se encontraron los vértices
+                        }
+                    
+                        // Obtener el peso de la arista
+                        var peso = parseFloat(partes[1].split(": ")[1]);
+                        
+                        // Determinar si la arista es bidireccional
+                        var bidireccional = partes[2].split(": ")[1] === "Si";
+                    
+                        // Crear y agregar la arista al array de aristas
+                        aristas.push(new arista(vertice1, vertice2, peso, bidireccional));
+                    });
+        
+                    // Redibujar el canvas
+                    clear(); // Limpiar el canvas antes de redibujar
+                    aristas.forEach(arista => arista.dibujar()); // Redibujar todas las aristas
+                    vertices.forEach(vertice => vertice.dibujar()); // Redibujar todos los vértices
+                    actualizarMatriz(); // Actualizar la matriz de adyacencia
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            archivo.click();
+        }
+        
+        
+        
+        
+        
+        
+        
  
  
  
@@ -238,15 +374,15 @@
  
          function actualizarMatriz() {
              // Inicializa la matriz de adyacencia
-             let matriz = Array(nodos.length).fill(0).map(() => Array(nodos.length).fill(0)); //Hace uso de la programacion funcinal (map)
+             let matriz = Array(vertices.length).fill(0).map(() => Array(vertices.length).fill(0)); //Hace uso de la programacion funcinal (map)
          
-             // Llena la matriz con los pesos de los arcos
-             arcos.forEach(arco => {
-                 let index1 = nodos.findIndex(n => n.nombre === arco.nodo1.nombre); //Busca los nodos
-                 let index2 = nodos.findIndex(n => n.nombre === arco.nodo2.nombre); //Busca los nodos
-                 matriz[index1][index2] = arco.peso; //Asigna el peso a la matriz
-                 if (arco.bidireccional) {
-                     matriz[index2][index1] = arco.peso; // Si es bidireccional, llena la otra dirección
+             // Llena la matriz con los pesos de los aristas
+             aristas.forEach(arista => {
+                 let index1 = vertices.findIndex(n => n.nombre === arista.vertice1.nombre); //Busca los vertices
+                 let index2 = vertices.findIndex(n => n.nombre === arista.vertice2.nombre); //Busca los vertices
+                 matriz[index1][index2] = arista.peso; //Asigna el peso a la matriz
+                 if (arista.bidireccional) {
+                     matriz[index2][index1] = arista.peso; // Si es bidireccional, llena la otra dirección
                  }
              });
          
@@ -263,19 +399,19 @@
              let cabecera = tabla.createTHead();
              let filaCabecera = cabecera.insertRow();
              filaCabecera.insertCell().textContent = ""; // Celda vacía en la esquina superior izquierda
-             nodos.forEach(nodo => {
+             vertices.forEach(vertice => {
                  let celda = filaCabecera.insertCell();
-                 celda.textContent = nodo.nombre;
+                 celda.textContent = vertice.nombre;
                  celda.style.border = '1px solid black';
                  celda.style.padding = '5px';
              });
          
              // Crea el cuerpo de la tabla
              let cuerpo = tabla.createTBody();
-             nodos.forEach((nodo, index) => {
+             vertices.forEach((vertice, index) => {
                  let fila = cuerpo.insertRow();
                  let celdaNombre = fila.insertCell();
-                 celdaNombre.textContent = nodo.nombre;
+                 celdaNombre.textContent = vertice.nombre;
                  celdaNombre.style.border = '1px solid black';
                  celdaNombre.style.padding = '5px';
          
@@ -291,45 +427,49 @@
  
              
          }
-         function obtenerPrerequisitos(nombreNodo) {
-             let nodo = nodos.find(n => n.nombre === nombreNodo);
-             if (!nodo) {
-                 alert("El nodo no existe.");
+         function obtenerPrerequisitos(nombrevertice) {
+             let vertice = vertices.find(n => n.nombre === nombrevertice);
+             if (!vertice) {
+                 alert("El vertice no existe.");
                  return [];
              }
          
-             // Encuentra todos los nodos que tienen un arco hacia el nodo dado
-             let prerequisitos = arcos
-                 .filter(arco => arco.nodo2.nombre === nombreNodo)
-                 .map(arco => arco.nodo1.nombre);
+             // Encuentra todos los vertices que tienen un arista hacia el vertice dado
+             let prerequisitos = aristas
+                 .filter(arista => arista.vertice2.nombre === nombrevertice)
+                 .map(arista => arista.vertice1.nombre);
          
              return prerequisitos;
          }
          
-         function obtenerPostrequisitos(nombreNodo) {
-             let nodo = nodos.find(n => n.nombre === nombreNodo);
-             if (!nodo) {
-                 alert("El nodo no existe.");
+         function obtenerPostrequisitos(nombrevertice) {
+             let vertice = vertices.find(n => n.nombre === nombrevertice);
+             if (!vertice) {
+                 alert("El vertice no existe.");
                  return [];
              }
          
-             // Encuentra todos los nodos que se pueden alcanzar desde el nodo dado
-             let postrequisitos = arcos
-                 .filter(arco => arco.nodo1.nombre === nombreNodo)
-                 .map(arco => arco.nodo2.nombre);
+             // Encuentra todos los vertices que se pueden alcanzar desde el vertice dado
+             let postrequisitos = aristas
+                 .filter(arista => arista.vertice1.nombre === nombrevertice)
+                 .map(arista => arista.vertice2.nombre);
          
              return postrequisitos;
          }
      </script>
  
-     <button onclick="agregarNodo()">Agregar Nodo</button>
+     <button onclick="agregarvertice()">Agregar vertice</button>
  
-     <button onclick="eliminarNodo()">Eliminar Nodo</button>
-     <button onclick="conectarNodos()">Conectar Nodos</button>
-     <button onclick="eliminarArco()">Eliminar Arco</button>
+     <button onclick="eliminarvertice()">Eliminar vertice</button>
+     <button onclick="conectarvertices()">Conectar vertices</button>
+     <button onclick="eliminararista()">Eliminar arista</button>
      <button onclick="cambiarPeso()">Cambiar Peso</button>
      <button onclick="mostrarPrerequisitos()">Mostrar Prerequisitos</button>
      <button onclick="mostrarPostrequisitos()">Mostrar Postrequisitos</button>
+     <button onclick="exportarGrafo()">Exportar Grafo</button>
+     <button onclick="importarGrafo()">Importar Grafo</button>
+     <input type="file" id="fileInput" style="display:none" accept=".txt" onchange="handleFileUpload(event)">
+
      <div id="matriz"></div>
  </body>
  </html>
